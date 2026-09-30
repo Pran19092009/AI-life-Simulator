@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Life Simulator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    body {
+      min-height:100vh;
+      color: #eef4ff;
+      background:
+        radial-gradient(circle at top left, #253f73 0, transparent 35%),
+        radial-gradient(circle at bottom right, #5d285f 0, transparent 35%),
+        #0a1020;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+    }
+
+    .app {
+      min-height:100vh;
+      padding: 24px;
+    }
+
+    .screen {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .glass {
+      background: rgba(18, 29, 55, 0.78);
+      border: 1px solid rgba(170, 193, 255, 0.18);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+    }
+
+    .hero {
+      min-height: calc(100vh - 48px);
+      display: grid;
+      place-items: center;
+    }
+
+    .hero-card {
+      width: 100%;
+      max-width: 780px;
+      text-align: center;
+      padding: 70px 30px;
+    }
+
+    .logo {
+      width: 92px;
+      height: 92px;
+      margin: auto;
+      display: grid;
+      place-items: center;
+      border-radius: 28px;
+      font-size: 48px;
+      background: linear-gradient(135deg, #6d7cff, #bc59db);
+      box-shadow: 0 0 45px rgba(118, 103, 255, 0.55);
+    }
+
+    h1 {
+      margin-top: 25px;
+      font-size: clamp(38px, 7vw, 76px);
+      letter-spacing: -3px;
+    }
+
+    h2 {
+      font-size: 28px;
+    }
+
+    h3 {
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #b7c3df;
+      line-height: 1.6;
+    }
+
+    .hero p {
+      max-width: 620px;
+      margin: 20px auto 30px;
+      font-size: 18px;
+    }
+
+    .primary-btn,
+    .secondary-btn,
+    .danger-btn {
+      padding: 13px 21px;
+      border-radius: 13px;
+      font-weight: 700;
+      transition: 0.2s ease;
+    }
+
+    .primary-btn {
+      color: white;
+      background: linear-gradient(135deg, #6575ff, #b750d6);
+      box-shadow: 0 8px 25px rgba(112, 91, 255, 0.3);
+    }
+
+    .secondary-btn {
+      color: #e8edff;
+      background: #263657;
+      border: 1px solid #40527b;
+    }
+
+    .danger-btn {
+      color: #ffdce1;
+      background: #632b44;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.12);
+    }
+
+    .selection {
+      padding: 42px 0;
+    }
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .character-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+    }
+
+    .character-card {
+      padding: 28px;
+      text-align: center;
+      transition: 0.25s ease;
+    }
+
+    .character-card:hover {
+      transform: translateY(-5px);
+      border-color: #8494ff;
+    }
+
+    .avatar {
+      width: 130px;
+      height: 130px;
+      margin: auto auto 18px;
+      display: grid;
+      place-items: center;
+      font-size: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #263d7b, #7b3d81);
+      border: 5px solid rgba(255,255,255,0.1);
+    }
+
+    .character-card p {
+      margin: 10px 0 20px;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.5fr 1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .character-stage {
+      min-height: 430px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background:
+        linear-gradient(rgba(22, 37, 74, 0.4), rgba(12, 18, 40, 0.85)),
+        radial-gradient(circle at center, #4966a1, #11182e 70%);
+    }
+
+    .stage-time {
+      position: absolute;
+      top: 16px;
+      left: 18px;
+      color: #c8d5ff;
+      font-size: 14px;
+    }
+
+    .stage-weather {
+      position: absolute;
+      top: 16px;
+      right: 18px;
+      font-size: 14px;
+    }
+
+    .big-avatar {
+      font-size: 145px;
+      animation: float 3s ease-in-out infinite;
+      filter: drop-shadow(0 15px 15px rgba(0,0,0,0.3));
+    }
+
+    @keyframes float {
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .activity {
+      margin-top: 18px;
+      padding: 11px 18px;
+      border-radius: 30px;
+      color: #fff;
+      background: rgba(0,0,0,0.3);
+    }
+
+    .stats {
+      margin-top: 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: 100px 1fr 48px;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .bar {
+      height: 10px;
+      overflow: hidden;
+      border-radius: 20px;
+      background: #253252;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 50%;
+      border-radius: inherit;
+      transition: width 0.4s ease;
+    }
+
+    .health { background: #ed6173; }
+    .energy { background: #f1bc55; }
+    .hunger { background: #69d49a; }
+    .happiness { background: #8b80ff; }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .action-btn {
+      padding: 14px 8px;
+      color: #eef4ff;
+      background: #202f52;
+      border: 1px solid #374b77;
+      border-radius: 13px;
+    }
+
+    .action-btn:hover {
+      background: #354a79;
+    }
+
+    .relationship {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .relationship-line {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #d9ddff;
+    }
+
+    .relationship .bar span {
+      background: linear-gradient(90deg, #ff6f91, #bb68ed);
+    }
+
+    .command-box {
+      display: flex;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .command-box input {
+      min-width: 0;
+      flex: 1;
+      padding: 13px;
+      color: white;
+      outline: none;
+      border: 1px solid #3e507a;
+      border-radius: 12px;
+      background: #111b35;
+    }
+
+    .log {
+      max-height: 340px;
+      overflow-y: auto;
+      margin-top: 15px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .log-item {
+      padding: 12px;
+      color: #d5def7;
+      border-left: 3px solid #7986ff;
+      border-radius: 8px;
+      background: #162342;
+      font-size: 14px;
+    }
+
+    .event {
+      margin-top: 18px;
+      padding: 15px;
+      color: #ffe9b1;
+      border: 1px solid #80662d;
+      border-radius: 13px;
+      background: #3b321e;
+    }
+
+    .footer-note {
+      margin-top: 22px;
+      text-align: center;
+      color: #7e8bab;
+      font-size: 12px;
+    }
+
+    @media (max-width: 950px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .character-stage {
+        grid-row: span 2;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .app {
+        padding: 14px;
+      }
+
+      .character-grid,
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dashboard-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .character-stage {
+        min-height: 360px;
+        grid-row: auto;
+      }
+
+      h1 {
+        letter-spacing: -1px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+
+    <section id="homeScreen" class="screen hero">
+      <div class="hero-card glass">
+        <div class="logo">🧠</div>
+        <h1>AI Life Simulator</h1>
+        <p>
+          Guide an AI character through everyday life, make decisions,
+          build relationships and discover unexpected events.
+        </p>
+        <button class="primary-btn" id="startBtn">Start New Life</button>
+        <div class="footer-note">
+          Your game progress is saved locally in this browser.
+        </div>
+      </div>
+    </section>
+
+    <section id="selectionScreen" class="screen selection hidden">
+      <div class="section-title">
+        <h2>Choose Your Character</h2>
+        <p>Select the AI person you want to guide.</p>
+      </div>
+
+      <div class="character-grid">
+        <div class="character-card glass">
+          <div class="avatar">👨🏻‍💻</div>
+          <h2>Aarav</h2>
+          <p>Creative, ambitious and curious. Aarav enjoys technology, work and learning new things.</p>
+          <button class="primary-btn select-character" data-character="aarav">
+            Play as Aarav
+          </button>
+        </div>
+
+        <div class="character-card glass">
+          <div class="avatar">👩🏻‍🎨</div>
+          <h2>Aanya</h2>
+          <p>Kind, intelligent and adventurous. Aanya loves art, people and exploring new places.</p>
+          <button class="primary-btn select-character" data-character="aanya">
+            Play as Aanya
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen hidden">
+      <div class="dashboard-header">
+        <div>
+          <h2>🌌 AI Life Simulator</h2>
+          <p id="welcomeText">Welcome to your new life.</p>
+        </div>
+
+        <div class="top-actions">
+          <button class="secondary-btn" id="saveBtn">💾 Save</button>
+          <button class="secondary-btn" id="homeBtn">🏠 Home</button>
+          <button class="danger-btn" id="resetBtn">Reset</button>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+
+        <div class="panel glass">
+          <h3>📊 Life Statistics</h3>
+          <p id="moneyText">Money: ₹100</p>
+
+          <div class="stats">
+            <div class="stat-row">
+              <span>❤️ Health</span>
+              <div class="bar"><span id="healthBar" class="health"></span></div>
+              <b id="healthValue">80</b>
+            </div>
+
+            <div class="stat-row">
+              <span>⚡ Energy</span>
+              <div class="bar"><span id="energyBar" class="energy"></span></div>
+              <b id="energyValue">80</b>
+            </div>
+
+            <div class="stat-row">
+              <span>🍽️ Hunger</span>
+              <div class="bar"><span id="hungerBar" class="hunger"></span></div>
+              <b id="hungerValue">70</b>
+            </div>
+
+            <div class="stat-row">
+              <span>😊 Happiness</span>
+              <div class="bar"><span id="happinessBar" class="happiness"></span></div>
+              <b id="happinessValue">70</b>
+            </div>
+          </div>
+
+          <div class="relationship">
+            <div class="relationship-line">
+              <span>💞 Relationship</span>
+              <b id="relationshipValue">20</b>
+            </div>
+            <div class="bar">
+              <span id="relationshipBar" style="width:20%"></span>
+            </div>
+          </div>
+
+          <div class="event" id="eventBox">
+            🌱 A new day begins. Your choices will shape the story.
+          </div>
+        </div>
+
+        <div class="character-stage glass">
+          <div class="stage-time" id="timeText">Day 1 • 08:00 AM</div>
+          <div class="stage-weather" id="weatherText">☀️ Sunny</div>
+
+          <div id="bigAvatar" class="big-avatar">👨🏻‍💻</div>
+          <h2 id="characterName">Aarav</h2>
+          <p id="characterDescription">Ready to start the day.</p>
+          <div class="activity" id="activityText">Standing at home</div>
+        </div>
+
+        <div class="panel glass">
+          <h3>🎮 Life Actions</h3>
+          <p>Choose an action for your character.</p>
+
+          <div class="action-grid">
+            <button class="action-btn" data-action="eat">🍔 Eat</button>
+            <button class="action-btn" data-action="sleep">😴 Sleep</button>
+            <button class="action-btn" data-action="work">💼 Work</button>
+            <button class="action-btn" data-action="walk">🚶 Walk</button>
+            <button class="action-btn" data-action="study">📚 Study</button>
+            <button class="action-btn" data-action="talk">💬 Talk</button>
+          </div>
+
+          <h3 style="margin-top:25px;">🤖 AI Command</h3>
+          <p>Try: “eat food”, “कामावर जा”, “study”, “Aanya सोबत बोल”</p>
+
+          <div class="command-box">
+            <input id="commandInput" placeholder="Type a command..." />
+            <button class="primary-btn" id="commandBtn">Send</button>
+          </div>
+
+          <h3 style="margin-top:25px;">📜 Life Log</h3>
+          <div id="log" class="log"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const defaultState = {
+      character: "aarav",
+      day: 1,
+      hour: 8,
+      minute: 0,
+      money: 100,
+      health: 80,
+      energy: 80,
+      hunger: 70,
+      happiness: 70,
+      relationship: 20,
+      activity: "Standing at home",
+      event: "🌱 A new day begins. Your choices will shape the story.",
+      log: [
+        "Welcome to AI Life Simulator.",
+        "Choose actions carefully. Every decision changes life."
+      ]
+    };
+
+    let game = JSON.parse(JSON.stringify(defaultState));
+
+    const characters = {
+      aarav: {
+        name: "Aarav",
+        emoji: "👨🏻‍💻",
+        description: "Creative, ambitious and curious.",
+        welcome: "Aarav is ready to start a new life."
+      },
+      aanya: {
+        name: "Aanya",
+        emoji: "👩🏻‍🎨",
+        description: "Kind, intelligent and adventurous.",
+        welcome: "Aanya is ready to start a new life."
+      }
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function clamp(value) {
+      return Math.max(0, Math.min(100, Math.round(value)));
+    }
+
+    function addLog(message) {
+      game.log.unshift(message);
+      game.log = game.log.slice(0, 20);
+    }
+
+    function advanceTime(minutes = 30) {
+      game.minute += minutes;
+
+      while (game.minute >= 60) {
+        game.minute -= 60;
+        game.hour += 1;
+      }
+
+      if (game.hour >= 24) {
+        game.hour = 0;
+        game.day += 1;
+
+        game.hunger = clamp(game.hunger - 8);
+        game.energy = clamp(game.energy - 10);
+
+        if (Math.random() < 0.35) {
+          randomEvent();
+        }
+      }
+    }
+
+    function formatTime() {
+      const suffix = game.hour >= 12 ? "PM" : "AM";
+      const hour12 = game.hour % 12 || 12;
+      return `Day ${game.day} • ${String(hour12).padStart(2, "0")}:${String(game.minute).padStart(2, "0")} ${suffix}`;
+    }
+
+    function randomEvent() {
+      const events = [
+        {
+          text: "🌧️ It started raining. Your character stayed indoors and felt comfortable.",
+          happiness: 2
+        },
+        {
+          text: "🎁 A neighbour gave you a small gift.",
+          money: 25
+        },
+        {
+          text: "💡 You learned something useful today.",
+          happiness: 5,
+          energy: -3
+        },
+        {
+          text: "🤒 Your character felt slightly tired.",
+          health: -5,
+          energy: -5
+        },
+        {
+          text: "🤝 You met a friendly person and made a new connection.",
+          relationship: 5,
+          happiness: 4
+        }
+      ];
+
+      const event = events[Math.floor(Math.random() * events.length)];
+
+      game.event = event.text;
+      game.money += event.money || 0;
+      game.health = clamp(game.health + (event.health || 0));
+      game.energy = clamp(game.energy + (event.energy || 0));
+      game.happiness = clamp(game.happiness + (event.happiness || 0));
+      game.relationship = clamp(game.relationship + (event.relationship || 0));
+
+      addLog(event.text);
+    }
+
+    function doAction(action) {
+      const name = characters[game.character].name;
+
+      if (action === "eat") {
+        if (game.money < 10) {
+          addLog("❌ You do not have enough money to buy food.");
+        } else {
+          game.money -= 10;
+          game.hunger = clamp(game.hunger + 25);
+          game.health = clamp(game.health + 3);
+          game.activity = "Eating a healthy meal";
+          addLog(`🍔 ${name} ate a meal. Hunger improved.`);
+        }
+      }
+
+      if (action === "sleep") {
+        game.energy = clamp(game.energy + 35);
+        game.health = clamp(game.health + 5);
+        game.hunger = clamp(game.hunger - 8);
+        game.activity = "Sleeping peacefully";
+        addLog(`😴 ${name} slept and restored energy.`);
+      }
+
+      if (action === "work") {
+        game.money += 35;
+        game.energy = clamp(game.energy - 18);
+        game.hunger = clamp(game.hunger - 10);
+        game.happiness = clamp(game.happiness - 2);
+        game.activity = "Working on an important task";
+        addLog(`💼 ${name} worked and earned ₹35.`);
+      }
+
+      if (action === "walk") {
+        game.energy = clamp(game.energy - 8);
+        game.happiness = clamp(game.happiness + 12);
+        game.health = clamp(game.health + 4);
+        game.activity = "Walking in the city park";
+        addLog(`🚶 ${name} went for a walk. Happiness improved.`);
+      }
+    
+      if (action === "study") {
+        game.energy = clamp(game.energy - 12);
+        game.happiness = clamp(game.happiness + 4);
+        game.activity = "Studying and learning something new";
+        addLog(`📚 ${name} studied and gained knowledge.`);
+      }
+
+      if (action === "talk") {
+        game.relationship = clamp(game.relationship + 12);
+        game.happiness = clamp(game.happiness + 8);
+        game.energy = clamp(game.energy - 4);
+        game.activity = "Talking with the other character";
+        addLog(`💬 ${name} had a meaningful conversation. Relationship improved.`);
+      }
+
+      advanceTime(30);
+      checkStats();
+      render();
+    }
+
+    function checkStats() {
+      if (game.hunger < 20) {
+        game.health = clamp(game.health - 4);
+        game.happiness = clamp(game.happiness - 3);
+      }
+
+      if (game.energy < 15) {
+        game.health = clamp(game.health - 3);
+      }
+
+      if (game.happiness < 15) {
+        game.relationship = clamp(game.relationship - 2);
+      }
+    }
+
+    function handleCommand() {
+      const command = $("commandInput").value.trim().toLowerCase();
+
+      if (!command) return;
+
+      $("commandInput").value = "";
+
+      if (
+        command.includes("eat") ||
+        command.includes("food") ||
+        command.includes("जेव") ||
+        command.includes("खाण")
+      ) {
+        doAction("eat");
+      } else if (
+        command.includes("sleep") ||
+        command.includes("झोप")
+      ) {
+        doAction("sleep");
+      } else if (
+        command.includes("work") ||
+        command.includes("काम")
+      ) {
+        doAction("work");
+      } else if (
+        command.includes("walk") ||
+        command.includes("फिर") ||
+        command.includes("बाहेर")
+      ) {
+        doAction("walk");
+      } else if (
+        command.includes("study") ||
+        command.includes("learn") ||
+        command.includes("अभ्यास")
+      ) {
+        doAction("study");
+      } else if (
+        command.includes("talk") ||
+        command.includes("speak") ||
+        command.includes("बोल")
+      ) {
+        doAction("talk");
+      } else {
+        addLog("🤖 I understand these commands: eat, sleep, work, walk, study and talk.");
+        render();
+      }
+    }
+
+    function render() {
+      const person = characters[game.character];
+
+      $("bigAvatar").textContent = person.emoji;
+      $("characterName").textContent = person.name;
+      $("characterDescription").textContent = person.description;
+      $("welcomeText").textContent = person.welcome;
+      $("activityText").textContent = game.activity;
+      $("timeText").textContent = formatTime();
+      $("moneyText").textContent = `Money: ₹${game.money}`;
+      $("eventBox").textContent = game.event;
+
+      const stats = ["health", "energy", "hunger", "happiness"];
+
+      stats.forEach((stat) => {
+        $(stat + "Bar").style.width = game[stat] + "%";
+        $(stat + "Value").textContent = game[stat];
+      });
+
+      $("relationshipBar").style.width = game.relationship + "%";
+      $("relationshipValue").textContent = game.relationship;
+
+      $("log").innerHTML = game.log
+        .map((item) => `<div class="log-item">${item}</div>`)
+        .join("");
+    }
+
+    function saveGame() {
+      localStorage.setItem("aiLifeSimulator", JSON.stringify(game));
+      addLog("💾 Game saved successfully in this browser.");
+      render();
+    }
+
+    function loadGame() {
+      const saved = localStorage.getItem("aiLifeSimulator");
+
+      if (saved) {
+        game = JSON.parse(saved);
+      }
+    }
+
+    function showScreen(screenId) {
+      ["homeScreen", "selectionScreen", "gameScreen"].forEach((id) => {
+        $(id).classList.add("hidden");
+      });
+
+      $(screenId).classList.remove("hidden");
+    }
+
+    $("startBtn").addEventListener("click", () => {
+      game = structuredClone(defaultState);
+      showScreen("selectionScreen");
+    });
+
+    document.querySelectorAll(".select-character").forEach((button) => {
+      button.addEventListener("click", () => {
+        game.character = button.dataset.character;
+        addLog(`${characters[game.character].name} entered the simulation.`);
+        showScreen("gameScreen");
+        render();
+      });
+    });
+
+    document.querySelectorAll(".action-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        doAction(button.dataset.action);
+      });
+    });
+
+    $("commandBtn").addEventListener("click", handleCommand);
+
+    $("commandInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        handleCommand();
+      }
+    });
+
+    $("saveBtn").addEventListener("click", saveGame);
+
+    $("homeBtn").addEventListener("click", () => {
+      saveGame();
+      showScreen("homeScreen");
+    });
+
+    $("resetBtn").addEventListener("click", () => {
+      const confirmReset = confirm("Are you sure you want to reset this life?");
+
+      if (confirmReset) {
+        localStorage.removeItem("aiLifeSimulator");
+        game = JSON.parse(JSON.stringify(defaultState));
+        showScreen("selectionScreen");
+      }
+    });
+
+    loadGame();
+    render();
+  </script>
+</body>
+</html>
+
